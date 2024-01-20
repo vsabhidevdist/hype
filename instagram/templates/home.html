@@ -1,0 +1,17 @@
+{% extends 'header.html' %}
+
+{% block content %}
+<h1>Home</h1>
+{% for i in data %}
+Name: {{i.username}}
+Email: {{i.email}}
+{% endfor%}
+
+<!-- <form action="add" method="POST">
+    {% csrf_token %}
+
+    Enter 1st Number<input type="number" name="num1">
+    Enter 2nd Number<input type="number" name="num2">
+    <input type="submit" >
+</form> -->
+{% endblock %}
