@@ -61,7 +61,9 @@ export async function POST(req: Request) {
       externalUserId: payload.data.id,
       email: payload.data.email_addresses[0].email_address,
       imageUrl : payload.data.image_url,
-  
+      
+          sname: `${payload.data.username}'s stream`
+       
     };
     console.log(postData)
     const handlePostRequest = async () => {
@@ -80,12 +82,12 @@ export async function POST(req: Request) {
     handlePostRequest()
   }
   if(eventType==="user.updated"){
-    const postData = {
+    const postData = { user :{
       username : payload.data.username,
       externalUserId: payload.data.id,
       email: payload.data.email_addresses[0].email_address,
-      imageUrl : payload.data.image_url,
-  
+      imageUrl : payload.data.image_url, },
+      stream:{name: `${payload.data.username}'s stream`}
     };
     const handlePutRequest = async () => {
       try {
