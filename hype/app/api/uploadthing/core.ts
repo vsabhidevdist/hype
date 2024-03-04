@@ -14,12 +14,14 @@ export const ourFileRouter = {
             return { user: self}
         })
         .onUploadComplete( async ({ metadata,file})=>{
+            const selfStream = await axios.post(`${process.env.HOST}/api/getstreambyuserid`, {"userId":metadata.user.id} );
             const pack = {
-                userId: metadata.user.id,
+                streamId: selfStream.data.id,
                 data: {
-                    thumbnailUrl : file.url
+                    thumbnailUrl : `${file.url}`,
                 }
             }
+            console.log(pack)
             await axios.post(`${process.env.HOST}/api/updatestream`, pack );
             return { fileUrl: file.url }
         })

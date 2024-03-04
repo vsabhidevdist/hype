@@ -54,6 +54,7 @@ export const InfoCard = ({name,hostIdentity,viewerIdentity,thumbnailUrl}:InfoCar
                                 fill
                                 src={thumbnailUrl}
                                 alt={name}
+                                className="object-cover"
                                 />
                             </div>
                         )}

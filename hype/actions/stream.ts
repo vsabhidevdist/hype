@@ -8,7 +8,7 @@ interface StreamProps{
     
         id: number,
         name: string,
-        thumbnailUrl: string,
+        thumbnailUrl: string | null,
         ingressId?: string,
         serverUrl?: string,
         streamKey?: string,
@@ -28,6 +28,7 @@ export const updateStream = async (values:Partial<StreamProps>) => {
         }
         const valueData={
             name : values.name,
+            thumbnailUrl: values.thumbnailUrl,
             isChatEnabled: values.isChatEnabled,
             isChatFollowersOnly:values.isChatFollowersOnly,
             isChatDelayed:values.isChatDelayed

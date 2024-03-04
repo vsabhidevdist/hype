@@ -13,6 +13,10 @@ import { updateStream } from '@/actions/stream';
 import { toast } from 'sonner';
 import { UploadDropzone } from '@/lib/uploadthing';
 import { useRouter } from 'next/navigation';
+import { Hint } from '../hint';
+import { Trash } from 'lucide-react';
+import Image from 'next/image';
+
 interface InfoModalProps{
     initialName:string;
     initialThumbnailUrl?:string | null;
@@ -24,8 +28,17 @@ export const InfoModal = ({initialName,initialThumbnailUrl}:InfoModalProps)=>{
     const closeRef=useRef<ElementRef<"button">>(null)
     const[isPending,startTransition] = useTransition();
     const [name,setName] =useState(initialName)
-    const [thumbnailUrl,setthumbnailUrl] =useState(initialThumbnailUrl)
-
+    const [thumbnailUrl,setThumbnailUrl] =useState(initialThumbnailUrl)
+    const onRemove = ()=>{
+        startTransition(()=>{
+            updateStream({ thumbnailUrl: null})
+            .then(()=>{toast.success("Thumbnail removed")
+                setThumbnailUrl("") 
+                closeRef?.current?.click()
+            })
+            .catch(()=>toast.error("Something went wrong!"))
+        })
+    }
     
     const onSubmit = (e:React.FormEvent<HTMLFormElement>)=>{
         e.preventDefault()
@@ -68,6 +81,30 @@ export const InfoModal = ({initialName,initialThumbnailUrl}:InfoModalProps)=>{
                     </div>
                     <div className='space-y-2'>
                     <label>Thumbnail</label>
+                    {thumbnailUrl? (
+                        <div className='relative aspect-video rounded-xl overflow-hidden border border-white/10'>
+                            <div className='absolute top-2 right-2 z-[10]'>
+                            <Hint asChild side='left' align='center' label='Remove thumbnail'>
+                                <Button 
+                                type='button'
+                                disabled={isPending}
+                                className='h-auto w-auto p-1.5'
+                                onClick={onRemove}
+                                >
+                                <Trash className='h-4 w-4'/>
+                                </Button>
+                            </Hint>
+                            </div>
+                            <Image 
+                            alt='thumbnail'
+                            src={thumbnailUrl}
+                            className='object-cover'
+                            fill
+                            />
+                        </div>
+                    ):(
+
+                    
                     <div className='rounded-xl border outline-dashed outline-muted'>
                     <UploadDropzone 
                     endpoint='thumbnailUploader'
@@ -80,11 +117,15 @@ export const InfoModal = ({initialName,initialThumbnailUrl}:InfoModalProps)=>{
                         }
                     }}
                     onClientUploadComplete={(res)=>{
-                        setthumbnailUrl(res?.[0]?.url)
+                        setThumbnailUrl(res?.[0]?.url)
+                        closeRef?.current?.click()
                         router.refresh()
                     }}
                     />
                     </div>
+                    
+                    )
+                    }
                     </div>
                     <div className='flex justify-between'>
                     <DialogClose ref={closeRef} asChild>

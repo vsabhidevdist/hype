@@ -1,5 +1,5 @@
 import json
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_list_or_404, get_object_or_404, render
 from .models import block, follow, user,stream
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from .serializers import userserializer,followserializer
 from django.core import serializers
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q,F
 # Create your views here.
 @api_view(['POST'])
 def userinfo(request):
@@ -39,6 +40,20 @@ def userupdate(request):
     s= stream.objects.filter(userId=user_instance)
     s.update(name=sname.get('name'))
     return Response({'status':200})
+
+@api_view(['PUT'])
+def updateBio(request):
+    id = request.data.get('externalUserId')
+    put_data = request.data.get('user')
+   
+
+    u = user.objects.filter(externalUserId=id)
+    u.update(**put_data)
+    
+    
+    return Response({'status':200,'obj':put_data})
+
+
 @api_view(['DELETE'])
 def userdelete(request):
     data = request.data
@@ -144,10 +159,12 @@ def getUserByUsername(request):
     for instance in queryset:
             data_dict = model_to_dict(instance)
             streams = stream.objects.get(userId=data_dict['id'])
+            follow_count = follow.objects.filter(following=data_dict['id']).count()
             stream_dict = model_to_dict(streams)
             # Convert ImageFieldFile to string (e.g., image URL)
             data_dict['imageUrl'] = str(data_dict['imageUrl'])
             data_dict['stream']=stream_dict
+            data_dict['followerCount']=follow_count
             data_list.append(data_dict)
     return JsonResponse(data_list[0],safe=False)
 
@@ -273,4 +290,41 @@ def updateStream(request):
     s.update(**put_data)
     return Response({'status': 200})
 
+
+@api_view(['POST'])
+def streamAuth(request):
+   key = request.data.get("key")
+   try:
+    s = stream.objects.get(streamKey=key)
+    return HttpResponse(f"Stream name: {stream.name}")
+   except:
+        return HttpResponse("Stream not found", status=404)
    
+
+@api_view(['GET'])
+def getStreams(request):
+    ordered_rows = stream.objects.all().order_by('isLive', 'updated_at')
+    data_list = []
+    for instance in ordered_rows:
+            data_dict = model_to_dict(instance)
+            
+            data_list.append(data_dict)
+    return JsonResponse(data_list,safe=False)
+
+@api_view(['POST'])
+def getStreamsByUser(request):
+    userId = request.data.get("userId")
+    streams = stream.objects.all().exclude(
+    Q(userId__blocking__blockerId=userId) |
+    Q(userId__in=block.objects.filter(blockedId=userId).values('blockerId')) | 
+    Q(userId=userId) ).annotate(
+    imageUrl=F('userId__imageUrl')).values('id','name','thumbnailUrl','isLive','userId__username','userId__imageUrl','userId__bio')
+    print(streams)
+    data_list = list(streams)
+
+    # Convert imageUrl and thumbnailUrl to string
+    for instance in data_list:
+        instance['imageUrl'] = str(instance['userId__imageUrl'])
+        instance['thumbnailUrl'] = str(instance['thumbnailUrl'])
+    
+    return JsonResponse(data_list,safe=False)

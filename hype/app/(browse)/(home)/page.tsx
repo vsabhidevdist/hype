@@ -15,11 +15,17 @@ import Link from "next/link";
 
 import Header from "@/components/ui/header";
 import Sidebar from "../_components/navbar";
+import { Results,ResultSkeleton } from "./_components/results";
+
+import { Suspense } from "react";
 export default function Home() {
   return (
    <>   
-   <div>
-   Home Page
+   <div className="h-full p-8 max-w-screen-2xl mx-auto">
+    <Suspense fallback={ <ResultSkeleton />}>
+   <Results />
+
+    </Suspense>
     
    </div>
 </>

@@ -9,6 +9,7 @@ urlpatterns = [
     path("userinfo",views.userinfo,name="userinfo"),
     path("userupdate",views.userupdate,name="userupdate"),
     path('userdelete',views.userdelete,name="userdelete"),
+    path('updatebio',views.updateBio,name="updatebio"),
     path('getuser',views.getUser,name="getuser"),
     path('getusers',views.getUsers,name="getusers"),
     path('getself',views.getSelf,name="getself"),
@@ -27,4 +28,7 @@ urlpatterns = [
 
     path('getstreambyuserid',views.getStreamByUserId,name="getstreambyuserid"),
     path('updatestream',views.updateStream,name="updatestream"),
+    path('streamauth',views.streamAuth,name="streamauth"),
+    path('getstreams',views.getStreams,name="getstreams"),
+    path('getstreamsbyuser',views.getStreamsByUser,name="getstreamsbyuser"),
 ]
