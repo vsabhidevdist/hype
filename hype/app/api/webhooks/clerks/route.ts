@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     };
     const handlePutRequest = async () => {
       try {
-        const response = await axios.delete(`${process.env.HOST}/api/userdelete`, {data: deleteData});
+        const response = await axios.post(`${process.env.HOST}/api/userdelete`, {data: deleteData});
   
         if (response.status === 200) {
           console.log('Delete request successful');

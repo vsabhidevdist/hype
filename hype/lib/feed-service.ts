@@ -21,7 +21,7 @@ export const getStreams = async ()=>{
         streams = response.data
     }
     else{
-        const response =  await axios.post(`${process.env.HOST}/api/getstreams`)
+        const response =  await axios.get(`${process.env.HOST}/api/getstreams`)
         streams = response.data
     }
     return streams

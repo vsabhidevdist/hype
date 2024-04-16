@@ -25,10 +25,13 @@ urlpatterns = [
     path('isblocked',views.isBlocked,name="isblocked"),
     path('blockuser',views.blockUser,name="blockuser"),
     path('unblockuser/<int:resource_id>/',views.unblockUser,name="unblockuser"),
+    path('getblockedusers',views.getBlockedUsers,name="getblockedusers"),
 
     path('getstreambyuserid',views.getStreamByUserId,name="getstreambyuserid"),
     path('updatestream',views.updateStream,name="updatestream"),
     path('streamauth',views.streamAuth,name="streamauth"),
     path('getstreams',views.getStreams,name="getstreams"),
     path('getstreamsbyuser',views.getStreamsByUser,name="getstreamsbyuser"),
+    path('getstreamsbyterm',views.getStreamsByTerm,name="getstreamsbyterm"),
+    path('getstreamsbytermforuser',views.getStreamsByTermForUser,name="getstreamsbytermforuser"),
 ]

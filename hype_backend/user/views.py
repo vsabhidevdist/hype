@@ -1,6 +1,7 @@
 import json
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_list_or_404, get_object_or_404, render
+from grpc import Status
 from .models import block, follow, user,stream
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -10,6 +11,7 @@ from django.core import serializers
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q,F
+
 # Create your views here.
 @api_view(['POST'])
 def userinfo(request):
@@ -54,7 +56,7 @@ def updateBio(request):
     return Response({'status':200,'obj':put_data})
 
 
-@api_view(['DELETE'])
+@api_view(['POST'])
 def userdelete(request):
     data = request.data
     u = user.objects.filter(externalUserId=data.get('externalUserId'))
@@ -285,9 +287,11 @@ def updateStream(request):
     if(iid):
         s = stream.objects.filter(ingressId=iid)
         s.update(**put_data)
+        
         return Response({'status': 200})
     s = stream.objects.filter(id=sid)
     s.update(**put_data)
+    
     return Response({'status': 200})
 
 
@@ -303,12 +307,12 @@ def streamAuth(request):
 
 @api_view(['GET'])
 def getStreams(request):
-    ordered_rows = stream.objects.all().order_by('isLive', 'updated_at')
-    data_list = []
-    for instance in ordered_rows:
-            data_dict = model_to_dict(instance)
-            
-            data_list.append(data_dict)
+    ordered_rows = stream.objects.all().annotate(
+    imageUrl=F('userId__imageUrl')).values('id','name','thumbnailUrl','isLive','userId__username','userId__imageUrl','userId__bio').order_by('-isLive', '-updated_at')
+    data_list = list(ordered_rows)
+    for instance in data_list:
+        instance['imageUrl'] = str(instance['userId__imageUrl'])
+        instance['thumbnailUrl'] = str(instance['thumbnailUrl'])
     return JsonResponse(data_list,safe=False)
 
 @api_view(['POST'])
@@ -318,7 +322,7 @@ def getStreamsByUser(request):
     Q(userId__blocking__blockerId=userId) |
     Q(userId__in=block.objects.filter(blockedId=userId).values('blockerId')) | 
     Q(userId=userId) ).annotate(
-    imageUrl=F('userId__imageUrl')).values('id','name','thumbnailUrl','isLive','userId__username','userId__imageUrl','userId__bio')
+    imageUrl=F('userId__imageUrl')).values('id','name','thumbnailUrl','isLive','userId__username','userId__imageUrl','userId__bio').order_by('-isLive', '-updated_at')
     print(streams)
     data_list = list(streams)
 
@@ -328,3 +332,81 @@ def getStreamsByUser(request):
         instance['thumbnailUrl'] = str(instance['thumbnailUrl'])
     
     return JsonResponse(data_list,safe=False)
+
+
+@api_view(['POST'])
+def getStreamsByTerm(request):
+    term = request.data.get("term")
+    try:
+          
+                # Retrieve streams by stream name
+            streams = stream.objects.filter(Q(userId__username__icontains=term) | 
+            Q(name__icontains=term)
+        ).values('id','name','thumbnailUrl','isLive','updated_at','userId__username','userId__imageUrl','userId__bio').order_by('-isLive', '-updated_at')
+
+            data_list = list(streams)
+
+            for instance in data_list:
+                instance['imageUrl'] = str(instance['userId__imageUrl'])
+                instance['thumbnailUrl'] = str(instance['thumbnailUrl'])
+    
+                return JsonResponse(data_list,safe=False)
+    except Exception as e:
+            return Response({"error": str(e)}, status=400)
+    
+@api_view(['POST'])
+def getStreamsByTermForUser(request):
+    term = request.data.get("term")
+    userId = request.data.get("userId")
+    data_list=[]
+    try:
+          
+                # Retrieve streams by stream name
+            streams = stream.objects.filter(Q(userId__username__icontains=term) | 
+            Q(name__icontains=term)
+        ).exclude(
+    Q(userId__blocking__blockerId=userId) |
+    Q(userId__in=block.objects.filter(blockedId=userId).values('blockerId')) 
+    # | 
+    # Q(userId=userId)
+      ).annotate(
+    imageUrl=F('userId__imageUrl')).values('id','name','thumbnailUrl','isLive','updated_at','userId__username','userId__imageUrl','userId__bio').order_by('-isLive', '-updated_at')
+            data_list = list(streams)
+
+            for instance in data_list:
+                instance['imageUrl'] = str(instance['userId__imageUrl'])
+                instance['thumbnailUrl'] = str(instance['thumbnailUrl'])
+    
+                return JsonResponse(data_list,safe=False)
+    except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+
+@api_view(['POST'])
+def getBlockedUsers(request):
+    blockerId = request.data.get('blockerId')
+    try:
+        
+       
+
+      
+
+        # Assuming your model is named 'Follow' instead of 'follow'
+        queryset = block.objects.filter(blockerId=blockerId).values("blockedId__id","blockedId__username","blockedId__email","blockedId__imageUrl","blockedId__createdAt")
+
+        data_list = list(queryset)
+
+        for instance in data_list:
+                instance['imageUrl'] = str(instance['blockedId__imageUrl'])
+                
+    
+                return JsonResponse(data_list,safe=False)
+    
+    except ObjectDoesNotExist:
+        return JsonResponse({"status": False})
+    
+    except Exception as e:
+        # Handle other exceptions, log the error, or return an appropriate response
+        print(f"Error: {e}")
+        return JsonResponse({"status": False})

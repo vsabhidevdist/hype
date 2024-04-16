@@ -80,3 +80,22 @@ export const unblockUser = async (id:string) =>{
         const unblock = await axios.delete(`${process.env.HOST}/api/unblockuser/${existingBlock.data.blockId}/`)
         return unblock.data
 }
+
+
+export const getBlockedUsers = async ()=>{
+    const self= await getSelf()
+    let result=[]
+    try{
+
+        const blockdata = {
+            "blockerId" : self.id,
+            
+        }
+        const blockedusers = await axios.post(`${process.env.HOST}/api/getblockedusers`,blockdata)
+        result=blockedusers.data
+    }
+    catch{
+
+    }
+    return result;
+}

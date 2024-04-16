@@ -21,21 +21,22 @@ export const onBlock = async (id:string)=>{
     }
 
     try{
-        roomService.removeParticipant(self.id,id)
+        roomService.removeParticipant(`${self.id}`,id)
     }catch{
 
     }
     revalidatePath(`/u/${self.username}/community`)
-   
+    revalidatePath(`/${self.username}`)
     return blockeduser
 }
 
 
 export const onUnblock = async (id:string)=>{
+    const self= await getSelf()
     const unblockeduser = await unblockUser(id);
     revalidatePath('/')
     if(unblockeduser){
-        revalidatePath(`/${unblockeduser.username}`)
+        revalidatePath(`/u/${self.username}`)
     }
     return unblockeduser
 }
